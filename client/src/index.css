@@ -1,5 +1,13 @@
 main {
   min-height: 80vh;
+  background-color: #f8b1b1;
+}
+.nav-container {
+  background-image: linear-gradient(90deg, #b84949, #ff8989);
+}
+
+.footer-container {
+  background-image: linear-gradient(90deg, #b84949, #ff8989);
 }
 
 h3 {

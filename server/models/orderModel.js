@@ -42,10 +42,13 @@ const orderSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    razorpay_order: {
+      type: String,
+    },
     paymentResult: {
       razorpay_payment_id: { type: String }, 
       razorpay_order_id: { type: String },
-      razorpay_signature: { type: String },
+      razorpay_signature: { type: String }
     },
     taxPrice: {
       type: Number,

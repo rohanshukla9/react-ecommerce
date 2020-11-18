@@ -1,5 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
+import Razorpay from 'razorpay'
+
+
 
 
 //@desc Create new order
@@ -16,24 +19,44 @@ const addOrderItems = asyncHandler(async(req, res) => {
     throw new Error('No order items')
     return
   } else {
-    const order = new Order({
-      orderItems, 
-      user: req.user._id,
-      shippingAddress, 
-      paymentMethod, 
-      itemsPrice, 
-      shippingPrice, 
-      totalPrice
-    })
-
-    const createdOrder = await order.save()
-
-    if(createdOrder)
-    {
-      res.status(201).json(createdOrder) 
-    } else {
-      throw new Error('I give up')
+    //instantiate razorpay
+    const options = {
+      amount: itemsPrice * 100,
+      currency: 'INR',
+      receipt: "bhr-store#1",
     }
+    const instance = new Razorpay({
+      key_id: process.env.RZR_KEY,
+      key_secret: process.env.RZR_SECRET
+    })
+   
+    instance.orders.create(options, async function(err, order){
+      try {
+        const dbOrder = new Order({
+          orderItems, 
+          user: req.user._id,
+          shippingAddress, 
+          paymentMethod, 
+          itemsPrice, 
+          shippingPrice, 
+          totalPrice,
+          razorpay_order: order.id
+        })
+  
+        const createdOrder = await dbOrder.save()
+        if(createdOrder)
+        {
+          res.status(201).json(createdOrder) 
+        
+        } else {
+          throw new Error('I give up')
+        }
+        
+      } catch (error) {
+        console.error(error)
+      }
+      
+    })
 
   }
 })
@@ -64,7 +87,7 @@ const updateOrderToPaid = asyncHandler(async(req, res) => {
 
   if(order) {
     order.isPaid = true
-    order.paidAt = Date.now()
+    order.paidAt = Date.now();
 
     order.paymentResult = {
       razorpay_payment_id: req.body.razorpay_payment_id,
@@ -75,6 +98,8 @@ const updateOrderToPaid = asyncHandler(async(req, res) => {
     //order.transactionamount = req.body.amount
 
     const updatedOrder = await order.save()
+
+    res.json(updatedOrder);
   } else {
     res.status(404);
     throw new Error('Order not found!')

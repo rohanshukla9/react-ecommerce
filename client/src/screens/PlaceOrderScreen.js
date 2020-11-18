@@ -5,6 +5,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import CheckoutSteps from '../components/CheckoutSteps'
 import { createOrder} from '../actions/orderActions'
+import { ORDER_CREATE_RESET } from '../constants/orderConstants'
+import { USER_DETAILS_RESET } from '../constants/userConstants'
 
 const PlaceOrderScreen = ({ history }) => {
 
@@ -35,20 +37,24 @@ const PlaceOrderScreen = ({ history }) => {
     if(success) {
       history.push(`/order/${order._id}`)
     }
+    
+    dispatch({ type: ORDER_CREATE_RESET })
+   // dispatch({ type: USER_DETAILS_RESET })
     // eslint-disable-next-line
   }, [history, success])
 
   const placeOrderHandler = () => {
     //console.log('hiya')
-
+   
     dispatch(createOrder({
       orderItems: cart.cartItems,
       shippingAddress: cart.shippingAddress,
       paymentMethod: cart.paymentMethod,
       itemsPrice: cart.itemsPrice,
       shippingPrice: cart.shippingPrice,
-      totalPrice: cart.totalPrice
+      totalPrice: cart.totalPrice,
     }))
+
   }
 
   return (
