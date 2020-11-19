@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
 import Razorpay from 'razorpay'
+import { json } from 'express';
 
 
 
@@ -21,7 +22,7 @@ const addOrderItems = asyncHandler(async(req, res) => {
   } else {
     //instantiate razorpay
     const options = {
-      amount: itemsPrice * 100,
+      amount: totalPrice * 100,
       currency: 'INR',
       receipt: "bhr-store#1",
     }
@@ -106,9 +107,21 @@ const updateOrderToPaid = asyncHandler(async(req, res) => {
   }
 })
 
+//@desc Get logged in user orders
+//@route Get /api/orders/myorders
+//@access Private
+
+const getAuthUserOrders = asyncHandler(async(req, res) => {
+
+  const orders = await Order.find({ user: req.user._id })
+
+  res.json(orders)
+})
+
 
 export {
   addOrderItems,
   getOrderById,
-  updateOrderToPaid
+  updateOrderToPaid,
+  getAuthUserOrders
 }

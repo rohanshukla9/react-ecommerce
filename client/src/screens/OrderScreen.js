@@ -9,13 +9,18 @@ import { getOrderDetails, payOrder } from '../actions/orderActions'
 import CryptoJS from 'crypto-js'
 import { ORDER_PAY_RESET, ORDER_PAY_FAIL } from '../constants/orderConstants'
 
+// function loadScript() {
+//   return new Promise((resolve) => {
+    
+//   })
+// }
 
 
-const OrderScreen = ({ match }) => {
+const OrderScreen = ({ match, history }) => {
 
   const orderId = match.params.id
 
-  //const [scriptReady, setScriptReady] = useState(false)
+  const [scriptReady, setScriptReady] = useState(false)
 
   const dispatch = useDispatch();
 
@@ -38,13 +43,29 @@ const OrderScreen = ({ match }) => {
 
   useEffect(() => {
 
-    //dispatch(getOrderDetails(orderId))
+    const addRazorPayScript = () => {
 
-    if(!order || successPay){
+      const script = document.createElement('script');
+      script.type = 'text/javascript'
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => {
+        setScriptReady(true)
+      }
+
+      document.body.appendChild(script);
+
+    }
+
+    if(!order || successPay || order._id !== orderId){
       dispatch({ type: ORDER_PAY_RESET })
       dispatch(getOrderDetails(orderId))
+    } else if(!order.isPaid){
+      if (!window.Razorpay) {
+        addRazorPayScript()
+      } else {
+        setScriptReady(true)
+      }
     }
-    //dispatch(getOrderDetails(orderId))
   }, [dispatch, orderId, order, successPay])
 
   const openRazorWindow = () => {
@@ -109,7 +130,7 @@ const OrderScreen = ({ match }) => {
       orderId,
       paymentResult
     ));
-    dispatch({ type: ORDER_PAY_RESET })
+   // dispatch({ type: ORDER_PAY_RESET })
    // dispatch(getOrderDetails(orderId))
   }
 
@@ -216,15 +237,18 @@ return loading ? (<Loader />) : error ? (<Message variant='danger'>{error}</Mess
                 <Col>₹{order.totalPrice}</Col>
               </Row>
             </ListGroup.Item>
-            {!order.isPaid ? (
-              <ListGroup.Item>
-              <Button type='button' variant='primary' id='rzp-button1' onClick={openRazorWindow}>Pay with Razorpay</Button>
-           
-              </ListGroup.Item>
+            {!order.isPaid && (
+                <ListGroup.Item>
+                  {loadingPay && <Loader />}
+                  {!scriptReady ? (
+                    <Loader />
+                  ) : (
+                    <Button type='button' variant='primary' id='rzp-button1' onClick={openRazorWindow}>Pay with Razorpay</Button>
+                  )}
+                </ListGroup.Item>
+              )}
 
-            ) : <ListGroup.Item>
-              <Button type='button' variant='flush' disabled>Paid</Button>
-              </ListGroup.Item>}
+        
 
             
           </ListGroup>
