@@ -16,7 +16,7 @@ const UserEditScreen = ({match, history}) => {
   const [phone_number, setPhoneNumber] = useState('')
   const [email, setEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
-  const [message, setMessage] = useState(null)
+  //const [message, setMessage] = useState(null)
 
   const dispatch = useDispatch()
 
