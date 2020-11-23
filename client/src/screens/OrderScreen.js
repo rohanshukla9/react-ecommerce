@@ -5,9 +5,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
 //import axios from 'axios'
-import { getOrderDetails, payOrder } from '../actions/orderActions'
+import { getOrderDetails, payOrder, deliverOrder } from '../actions/orderActions'
 import CryptoJS from 'crypto-js'
-import { ORDER_PAY_RESET, ORDER_PAY_FAIL } from '../constants/orderConstants'
+import { ORDER_PAY_RESET, ORDER_DELIVER_RESET, ORDER_PAY_FAIL } from '../constants/orderConstants'
 
 // function loadScript() {
 //   return new Promise((resolve) => {
@@ -31,6 +31,12 @@ const OrderScreen = ({ match, history }) => {
   const orderPay = useSelector(state => state.orderPay)
   const { loading:loadingPay, success:successPay } = orderPay
 
+  const orderDeliver = useSelector(state => state.orderDeliver)
+  const { loading:loadingDeliver, success:successDeliver } = orderDeliver
+
+  const userLogin = useSelector(state => state.userLogin)
+  const { userInfo } = userLogin
+
   if(!loading){
     const addDecimals = (num) => {
       return (Math.round(num * 100) / 100).toFixed(2)
@@ -42,6 +48,10 @@ const OrderScreen = ({ match, history }) => {
   }
 
   useEffect(() => {
+
+    if(!userInfo){
+      history.push('/login')
+    }
 
     const addRazorPayScript = () => {
 
@@ -56,8 +66,9 @@ const OrderScreen = ({ match, history }) => {
 
     }
 
-    if(!order || successPay || order._id !== orderId){
+    if(!order || successPay || successDeliver || order._id !== orderId){
       dispatch({ type: ORDER_PAY_RESET })
+      dispatch({ type: ORDER_DELIVER_RESET })
       dispatch(getOrderDetails(orderId))
     } else if(!order.isPaid){
       if (!window.Razorpay) {
@@ -66,7 +77,7 @@ const OrderScreen = ({ match, history }) => {
         setScriptReady(true)
       }
     }
-  }, [dispatch, orderId, order, successPay])
+  }, [dispatch, orderId, order, successPay, successDeliver])
 
   const openRazorWindow = () => {
     let options = {
@@ -132,6 +143,10 @@ const OrderScreen = ({ match, history }) => {
     ));
    // dispatch({ type: ORDER_PAY_RESET })
    // dispatch(getOrderDetails(orderId))
+  }
+
+  const deliverHandler = () => {
+    dispatch(deliverOrder(order))
   }
 
 
@@ -248,8 +263,15 @@ return loading ? (<Loader />) : error ? (<Message variant='danger'>{error}</Mess
                 </ListGroup.Item>
               )}
 
-        
+              {loadingDeliver && <Loader />}
 
+              {userInfo && userInfo.isAdmin && order.isPaid && !order.isDelivered && (
+                <ListGroup.Item>
+                  <Button type='button' className='btn btn-block' onClick={deliverHandler}>
+                    Mark as Delivered
+                  </Button>
+                </ListGroup.Item>
+              )}
             
           </ListGroup>
         </Card>
