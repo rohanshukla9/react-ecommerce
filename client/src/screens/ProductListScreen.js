@@ -4,17 +4,21 @@ import { Table, Row, Col, Button } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
+import Paginate from '../components/Paginate'
 import { listProducts, deleteProduct, createProduct } from '../actions/productActions'
 import { PRODUCT_CREATE_RESET } from '../constants/productConstants'
 
 
 const ProductListScreen = ({ history, match}) => {
 
+  const pageNumber = match.params.pageNumber || 1
+
+
 
   const dispatch = useDispatch()
 
   const productList = useSelector(state => state.productList)
-  const { loading, error, products } = productList
+  const { loading, error, products, page, pages } = productList
 
   const productDelete = useSelector(state => state.productDelete)
   const { loading:loadingDelete, error:errorDelete, success:successDelete } = productDelete
@@ -36,10 +40,10 @@ const ProductListScreen = ({ history, match}) => {
     if(successCreate) {
       history.push(`/admin/product/${createdProduct._id}/edit`)
     } else {
-      dispatch(listProducts())
+      dispatch(listProducts('', pageNumber))
     }
     
-  }, [dispatch, history, userInfo, successDelete, successCreate, createdProduct])
+  }, [dispatch, history, userInfo, successDelete, successCreate, createdProduct, pageNumber])
 
   const deleteHandler = (id) => {
     if(window.confirm('Are you sure')){
@@ -60,7 +64,7 @@ const ProductListScreen = ({ history, match}) => {
           <h1>Products</h1>
         </Col>
         <Col className='text-right'>
-          <Button className='my-3' onClick={createProductHandler}><i className='fas fa-plus'></i>Create Product</Button>
+          <Button className='my-3' onClick={createProductHandler}><i className='fas fa-plus'></i> Create Product</Button>
         </Col>
       </Row>
       {loadingDelete && <Loader />}
@@ -68,6 +72,7 @@ const ProductListScreen = ({ history, match}) => {
       {loadingCreate && <Loader />}
       {errorCreate && <Message variant='danger'>{errorCreate}</Message>}
       {loading ? <Loader /> : error ? <Message variant='danger'>{error}</Message> : (
+        <>
         <Table striped bordered hover responsive className='table-sm'>
           <thead>
             <tr>
@@ -76,7 +81,7 @@ const ProductListScreen = ({ history, match}) => {
               <th>Price</th>
               <th>Category</th>
               <th>Brand</th>
-              <th></th>
+              <th>Actions</th>
             </tr>
           </thead>
 
@@ -85,10 +90,7 @@ const ProductListScreen = ({ history, match}) => {
               <tr key={product._id}>
                 <td>{product._id}</td>
                 <td>{product.name}</td>
-                <td>{product.price}</td>
-                <td>
-                  {product.price}
-                </td>
+                <td>₹{product.price}</td>
                 <td>
                   {product.category}
                 </td>
@@ -108,6 +110,8 @@ const ProductListScreen = ({ history, match}) => {
             ))}
           </tbody>
         </Table>
+        <Paginate pages={pages} page={page} isAdmin={true} />
+        </>
       )}
     </>
   )

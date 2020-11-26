@@ -5,9 +5,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
 //import axios from 'axios'
-import { getOrderDetails, payOrder } from '../actions/orderActions'
+import { getOrderDetails, payOrder, deliverOrder } from '../actions/orderActions'
 import CryptoJS from 'crypto-js'
-import { ORDER_PAY_RESET, ORDER_PAY_FAIL } from '../constants/orderConstants'
+import { ORDER_PAY_RESET, ORDER_DELIVER_RESET, ORDER_PAY_FAIL } from '../constants/orderConstants'
 
 // function loadScript() {
 //   return new Promise((resolve) => {
@@ -31,6 +31,12 @@ const OrderScreen = ({ match, history }) => {
   const orderPay = useSelector(state => state.orderPay)
   const { loading:loadingPay, success:successPay } = orderPay
 
+  const orderDeliver = useSelector(state => state.orderDeliver)
+  const { loading:loadingDeliver, success:successDeliver } = orderDeliver
+
+  const userLogin = useSelector(state => state.userLogin)
+  const { userInfo } = userLogin
+
   if(!loading){
     const addDecimals = (num) => {
       return (Math.round(num * 100) / 100).toFixed(2)
@@ -43,11 +49,16 @@ const OrderScreen = ({ match, history }) => {
 
   useEffect(() => {
 
-    const addRazorPayScript = () => {
+    if(!userInfo){
+      history.push('/login')
+    }
+
+    const addRazorPayScript = async() => {
 
       const script = document.createElement('script');
       script.type = 'text/javascript'
       script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.async = true;
       script.onload = () => {
         setScriptReady(true)
       }
@@ -56,8 +67,9 @@ const OrderScreen = ({ match, history }) => {
 
     }
 
-    if(!order || successPay || order._id !== orderId){
+    if(!order || successPay || successDeliver || order._id !== orderId){
       dispatch({ type: ORDER_PAY_RESET })
+      dispatch({ type: ORDER_DELIVER_RESET })
       dispatch(getOrderDetails(orderId))
     } else if(!order.isPaid){
       if (!window.Razorpay) {
@@ -66,24 +78,22 @@ const OrderScreen = ({ match, history }) => {
         setScriptReady(true)
       }
     }
-  }, [dispatch, orderId, order, successPay])
+  }, [dispatch, orderId, order, successPay, successDeliver, userInfo, history])
 
   const openRazorWindow = () => {
     let options = {
-      "key": "rzp_test_B2ql0wBYO5J9tH", 
+      "key": "rzp_live_sfiQdbNlpqQdxB", 
       "amount": order.totalPrice * 100, 
       "currency": "INR",
       "name": "Bharuch Kirana",
       "description": "Test Transaction",
-      "image": "ssss",
-      "order_id": order.razorpay_order, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+      "order_id": order.razorpay_order,
       "handler": function (response){
-         // alert(response.razorpay_payment_id);
-          //alert(response.razorpay_order_id);
-          //alert(response.razorpay_signature)
-          let generatedSignature = response.razorpay_signature
+          const generatedSignature = response.razorpay_signature
+         // console.log(response)
 
-          let dbSignature = CryptoJS.HmacSHA256(order.razorpay_order + "|" + response.razorpay_payment_id, "WFm47pKBtO8Ccg6B3Rul2jxU")
+          const dbSignature = CryptoJS.HmacSHA256(order.razorpay_order + "|" + response.razorpay_payment_id, "FS8y0OzQn44mKvWTqLZ8cUj1")
+
 
           const paymentResult = {
             razorpay_order_id:response.razorpay_order_id, 
@@ -112,15 +122,8 @@ const OrderScreen = ({ match, history }) => {
 
     let razor1 = new window.Razorpay(options);
     razor1.on('payment.failed', function (response){
-      // alert(response.error.code);
-      // alert(response.error.description);
-      // alert(response.error.source);
-      // alert(response.error.step);
-      // alert(response.error.reason);
-      // alert(response.error.metadata.order_id);
-      // alert(response.error.metadata.payment_id);
       dispatch({ type: ORDER_PAY_FAIL })
-      });
+    });
      
     razor1.open();
   }
@@ -132,6 +135,10 @@ const OrderScreen = ({ match, history }) => {
     ));
    // dispatch({ type: ORDER_PAY_RESET })
    // dispatch(getOrderDetails(orderId))
+  }
+
+  const deliverHandler = () => {
+    dispatch(deliverOrder(order))
   }
 
 
@@ -248,8 +255,15 @@ return loading ? (<Loader />) : error ? (<Message variant='danger'>{error}</Mess
                 </ListGroup.Item>
               )}
 
-        
+              {loadingDeliver && <Loader />}
 
+              {userInfo && userInfo.isAdmin && order.isPaid && !order.isDelivered && (
+                <ListGroup.Item>
+                  <Button type='button' className='btn btn-block' onClick={deliverHandler}>
+                    Mark as Delivered
+                  </Button>
+                </ListGroup.Item>
+              )}
             
           </ListGroup>
         </Card>

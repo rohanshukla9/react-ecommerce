@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react'
+import axios from 'axios'
 import { Link } from 'react-router-dom'
 import { Form, Button } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
@@ -19,6 +20,7 @@ const ProductEditScreen = ({match, history}) => {
   const [category, setCategory] = useState('')
   const [countInStock, setCountInStock] = useState(0)
   const [description, setDescription] = useState('')
+  const [uploading, setUploading] = useState(false)
 
   const dispatch = useDispatch()
 
@@ -50,11 +52,32 @@ const ProductEditScreen = ({match, history}) => {
         setDescription(product.description)
       }
     }
-    
-    
-
   
   }, [dispatch, history, productId, product, successUpdate])
+
+  const uploadFileHandler = async(e) => {
+    const file = e.target.files[0]
+
+    const formData = new FormData()
+    formData.append('image', file)
+    setUploading(true)
+    
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+
+      const { data } = await axios.post('/api/upload', formData, config)
+
+      setImage(data)
+      setUploading(false)
+    } catch (error) {
+      console.error(error)
+      setUploading(false)
+    }
+  }
 
   const submitHandler = (e) => {
 
@@ -89,21 +112,21 @@ const ProductEditScreen = ({match, history}) => {
         <Form onSubmit={submitHandler}>
         <Form.Group controlId='name'>
           <Form.Label>Full Name:</Form.Label>
-          <Form.Control type='name' 
-          placeholder='Enter Name' 
-          value={name}
-          onChange={(e) => setName(e.target.value)}>
+            <Form.Control type='name' 
+            placeholder='Enter Name' 
+            value={name}
+            onChange={(e) => setName(e.target.value)}>
 
-          </Form.Control>
+            </Form.Control>
         </Form.Group>
         <Form.Group controlId='price'>
           <Form.Label>Price:</Form.Label>
-          <Form.Control type='number' 
-          placeholder='Enter Price(in INR)' 
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}>
+            <Form.Control type='number' 
+            placeholder='Enter Price(in INR)' 
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}>
 
-          </Form.Control>
+            </Form.Control>
         </Form.Group>
 
         <Form.Group controlId='image'>
@@ -112,6 +135,8 @@ const ProductEditScreen = ({match, history}) => {
           onChange={(e) => setImage(e.target.value)}>
 
           </Form.Control>
+          <Form.File id='image-file' label='Choose File' custom onClick={uploadFileHandler}></Form.File>
+          {uploading && <Loader />}
         </Form.Group>
         
         <Form.Group controlId='brand'>
