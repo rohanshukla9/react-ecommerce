@@ -81,7 +81,7 @@ const ProductListScreen = ({ history, match}) => {
               <th>Price</th>
               <th>Category</th>
               <th>Brand</th>
-              <th></th>
+              <th>Actions</th>
             </tr>
           </thead>
 
@@ -90,10 +90,7 @@ const ProductListScreen = ({ history, match}) => {
               <tr key={product._id}>
                 <td>{product._id}</td>
                 <td>{product.name}</td>
-                <td>{product.price}</td>
-                <td>
-                  {product.price}
-                </td>
+                <td>₹{product.price}</td>
                 <td>
                   {product.category}
                 </td>

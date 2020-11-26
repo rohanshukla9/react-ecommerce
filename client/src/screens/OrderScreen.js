@@ -53,11 +53,12 @@ const OrderScreen = ({ match, history }) => {
       history.push('/login')
     }
 
-    const addRazorPayScript = () => {
+    const addRazorPayScript = async() => {
 
       const script = document.createElement('script');
       script.type = 'text/javascript'
       script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.async = true;
       script.onload = () => {
         setScriptReady(true)
       }
@@ -77,24 +78,22 @@ const OrderScreen = ({ match, history }) => {
         setScriptReady(true)
       }
     }
-  }, [dispatch, orderId, order, successPay, successDeliver])
+  }, [dispatch, orderId, order, successPay, successDeliver, userInfo, history])
 
   const openRazorWindow = () => {
     let options = {
-      "key": "rzp_test_B2ql0wBYO5J9tH", 
+      "key": "rzp_live_sfiQdbNlpqQdxB", 
       "amount": order.totalPrice * 100, 
       "currency": "INR",
       "name": "Bharuch Kirana",
       "description": "Test Transaction",
-      "image": "ssss",
-      "order_id": order.razorpay_order, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+      "order_id": order.razorpay_order,
       "handler": function (response){
-         // alert(response.razorpay_payment_id);
-          //alert(response.razorpay_order_id);
-          //alert(response.razorpay_signature)
-          let generatedSignature = response.razorpay_signature
+          const generatedSignature = response.razorpay_signature
+         // console.log(response)
 
-          let dbSignature = CryptoJS.HmacSHA256(order.razorpay_order + "|" + response.razorpay_payment_id, "WFm47pKBtO8Ccg6B3Rul2jxU")
+          const dbSignature = CryptoJS.HmacSHA256(order.razorpay_order + "|" + response.razorpay_payment_id, "FS8y0OzQn44mKvWTqLZ8cUj1")
+
 
           const paymentResult = {
             razorpay_order_id:response.razorpay_order_id, 
@@ -123,15 +122,8 @@ const OrderScreen = ({ match, history }) => {
 
     let razor1 = new window.Razorpay(options);
     razor1.on('payment.failed', function (response){
-      // alert(response.error.code);
-      // alert(response.error.description);
-      // alert(response.error.source);
-      // alert(response.error.step);
-      // alert(response.error.reason);
-      // alert(response.error.metadata.order_id);
-      // alert(response.error.metadata.payment_id);
       dispatch({ type: ORDER_PAY_FAIL })
-      });
+    });
      
     razor1.open();
   }

@@ -13,7 +13,7 @@ import { json } from 'express';
 const addOrderItems = asyncHandler(async(req, res) => {
 
   const { orderItems, shippingAddress, paymentMethod, itemsPrice, shippingPrice, totalPrice } = req.body;
-
+  
   if(orderItems && orderItems.length === 0) {
     res.status(400)
 
@@ -30,7 +30,7 @@ const addOrderItems = asyncHandler(async(req, res) => {
       key_id: process.env.RZR_KEY,
       key_secret: process.env.RZR_SECRET
     })
-   
+
     instance.orders.create(options, async function(err, order){
       try {
         const dbOrder = new Order({
@@ -54,9 +54,8 @@ const addOrderItems = asyncHandler(async(req, res) => {
         }
         
       } catch (error) {
-        console.error(error)
+        console.log(error)
       }
-      
     })
 
   }

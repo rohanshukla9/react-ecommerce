@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux'
 import { Row, Col, Image, ListGroup, Card, Button, Form } from 'react-bootstrap';
 import Rating from '../components/Rating';
+import Meta from '../components/Meta';
 import { listProductDetails, createProductReview } from '../actions/productActions'
 import Loader from '../components/Loader';
 import Message from '../components/Message';
@@ -64,6 +65,7 @@ const ProductScreen = ({ history, match }) => {
       </Link>
       {loading ? <Loader /> : error ? <Message variant='danger'>{error}</Message> : (
         <>
+        <Meta title={product.name}></Meta>
         <Row>
           <Col md={6}>
             <Image src={product.image} alt={product.name} fluid></Image>
